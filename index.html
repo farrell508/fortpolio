@@ -24,7 +24,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // 전역에서 쓸 수 있게 window에 노출
   window.__firestore = { db, doc, getDoc, setDoc };
 </script>
 <style>
