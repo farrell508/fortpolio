@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Munjeokman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD93cWIqtGKhvQtr5RFVBbmp1lV8elKr8g",
+    authDomain: "potfolio-9da2b.firebaseapp.com",
+    projectId: "potfolio-9da2b",
+    storageBucket: "potfolio-9da2b.firebasestorage.app",
+    messagingSenderId: "860611886663",
+    appId: "1:860611886663:web:e601c5e58004e8725b3b62",
+    measurementId: "G-T2TE3K1M7E"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 전역에서 쓸 수 있게 window에 노출
+  window.__firestore = { db, doc, getDoc, setDoc };
+</script>
+<style>
+  :root {
+    --lavender: #b8a9e8;
+    --lavender-dim: #dcd4f2;
+    --mint: #7fe0c4;
+    --mint-dim: #d2f5ea;
+    --white: #fdfcfb;
+    --black: #14131a;
+    --ink: #2a2836;
+    --line: rgba(20,19,26,0.09);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- background grid texture ---------- */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  .bg-glow {
+    position: fixed;
+    top: -20%;
+    right: -10%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, var(--lavender-dim) 0%, transparent 70%);
+    opacity: 0.6;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .bg-glow-2 {
+    position: fixed;
+    bottom: -10%;
+    left: -15%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, var(--mint-dim) 0%, transparent 70%);
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  main { position: relative; z-index: 1; }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+    background: rgba(253,252,251,0.75);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 64px;
+  }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-brand .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--lavender), var(--mint));
+  }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-links a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .nav-links a:hover { opacity: 1; }
+  .edit-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 100px;
+    background: linear-gradient(135deg, var(--lavender), var(--mint));
+    color: var(--black);
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    min-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    opacity: 0.55;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeUp 0.7s ease backwards;
+    animation-delay: 0.05s;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--mint);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--mint-dim);
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 7.5vw, 88px);
+    line-height: 0.98;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    animation: fadeUp 0.7s ease backwards;
+    animation-delay: 0.15s;
+  }
+  .hero h1 .line2 {
+    background: linear-gradient(100deg, var(--lavender) 10%, var(--mint) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-meta {
+    margin-top: 34px;
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    animation: fadeUp 0.7s ease backwards;
+    animation-delay: 0.35s;
+  }
+  .hero-meta span {
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    color: var(--ink);
+    opacity: 0.75;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-meta .tag-del {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0.5;
+    padding: 0;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .hero-meta .tag-del:hover { opacity: 1; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- section shared ---------- */
+  section { padding: 80px 0; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 44px;
+  }
+  .section-head-left { display: flex; align-items: baseline; gap: 14px; }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--mint);
+    background: var(--mint-dim);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .section-head h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* ---------- timeline ---------- */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--lavender) 0%, var(--mint) 100%);
+    border-radius: 2px;
+  }
+
+  .t-year-group {
+    margin-bottom: 40px;
+  }
+  .t-year-group:last-child { margin-bottom: 0; }
+
+  .t-year {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 22px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .t-year::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 3px solid var(--lavender);
+  }
+
+  .t-item {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .t-item:hover {
+    transform: translateX(4px);
+    border-color: var(--lavender);
+  }
+  .t-item:last-child { margin-bottom: 0; }
+
+  .t-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+    height: fit-content;
+    letter-spacing: 0.02em;
+  }
+  .badge-gold { background: #fbe9c9; color: #8a5a00; }
+  .badge-silver { background: #e6e6ee; color: #55546e; }
+  .badge-bronze { background: #f2dcc8; color: #7a4420; }
+  .badge-rank { background: var(--mint-dim); color: #0f7a5c; }
+  .badge-award { background: var(--lavender-dim); color: #5c4a99; }
+
+  .t-desc {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    flex: 1;
+  }
+
+  .t-item-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.45;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: opacity 0.15s, background 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .icon-btn:hover { opacity: 1; background: var(--lavender-dim); }
+  .icon-btn.danger:hover { background: #fbdada; }
+
+  /* ---------- profile card ---------- */
+  .profile-card {
+    display: flex;
+    gap: 32px;
+    padding: 32px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(184,169,232,0.06), rgba(127,224,196,0.06));
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .profile-item { flex: 1; min-width: 160px; position: relative; }
+  .profile-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+    margin-bottom: 6px;
+  }
+  .profile-value {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  /* ---------- add button ---------- */
+  .add-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1.5px dashed var(--lavender);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.2s, border-style 0.2s;
+    width: 100%;
+    margin-top: 14px;
+  }
+  .add-btn:hover { background: var(--lavender-dim); border-style: solid; }
+
+  /* ---------- footer ---------- */
+  footer {
+    padding: 50px 0 70px;
+    border-top: 1px solid var(--line);
+    margin-top: 20px;
+  }
+  footer .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    opacity: 0.45;
+  }
+
+  /* ---------- modal ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,19,26,0.45);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(20,19,26,0.25);
+  }
+  .modal-box h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
+  }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.55;
+    margin-bottom: 6px;
+  }
+  .modal-field input, .modal-field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Pretendard', sans-serif;
+    background: var(--white);
+    color: var(--black);
+  }
+  .modal-field input:focus, .modal-field select:focus {
+    outline: none;
+    border-color: var(--lavender);
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .modal-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .modal-btn.primary {
+    background: linear-gradient(135deg, var(--lavender), var(--mint));
+    color: var(--black);
+  }
+  .modal-btn.secondary {
+    background: var(--line);
+    color: var(--ink);
+  }
+  .modal-hint {
+    font-size: 12px;
+    opacity: 0.5;
+    margin-top: 10px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--black);
+    color: var(--white);
+    padding: 12px 22px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    .hero-meta span { font-size: 12px; padding: 6px 12px; }
+    .profile-card { flex-direction: column; align-items: flex-start; }
+    .nav-links { gap: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--lavender);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="nav-brand"><span class="dot"></span>Portfolio</div>
+    <div class="nav-links">
+      <a href="#about">ABOUT</a>
+      <a href="#timeline">RECORDS</a>
+      <span id="editPill" class="edit-pill" style="display:none;">EDIT MODE</span>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-tag mono">2009. 05</div>
+      <h1>Munjeokman<br><span class="line2">Portfolio</span></h1>
+      <div class="hero-meta" id="heroMetaContainer"></div>
+      <button class="add-btn" id="addTagBtn" style="display:none; margin-top:18px; width:auto; padding:8px 16px;">+ 태그 추가</button>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-head-left">
+          <span class="section-num mono">01</span>
+          <h2>School</h2>
+        </div>
+      </div>
+      <div class="profile-card" id="schoolCard"></div>
+      <button class="add-btn" id="addSchoolBtn" style="display:none;">+ 학교 추가</button>
+    </div>
+  </section>
+
+  <section id="timeline">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-head-left">
+          <span class="section-num mono">02</span>
+          <h2>Records</h2>
+        </div>
+      </div>
+      <div class="timeline" id="timelineContainer"></div>
+      <button class="add-btn" id="addRecordBtn" style="display:none;">+ 성적 추가</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>© 2026 PORTFOLIO</p>
+    <p>BUILT WITH CARE</p>
+  </div>
+</footer>
+
+<!-- 비밀번호 모달 -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal-box">
+    <h3>편집 모드 잠금 해제</h3>
+    <div class="modal-field">
+      <label>비밀번호</label>
+      <input type="password" id="pwInput" placeholder="••••">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="pwCancel">취소</button>
+      <button class="modal-btn primary" id="pwSubmit">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 성적 추가/수정 모달 -->
+<div class="modal-overlay" id="recordModal">
+  <div class="modal-box">
+    <h3 id="recordModalTitle">성적 추가</h3>
+    <div class="modal-field">
+      <label>연도</label>
+      <input type="text" id="recYear" placeholder="예: 2026">
+    </div>
+    <div class="modal-field">
+      <label>대회/내용</label>
+      <input type="text" id="recDesc" placeholder="예: KOI 고등부 1차 — 동상">
+    </div>
+    <div class="modal-field">
+      <label>뱃지 텍스트</label>
+      <input type="text" id="recBadgeText" placeholder="예: 동상">
+    </div>
+    <div class="modal-field">
+      <label>뱃지 색상</label>
+      <select id="recBadgeColor">
+        <option value="badge-gold">금색 (대상/1등)</option>
+        <option value="badge-silver">은색 (2등)</option>
+        <option value="badge-bronze">동색 (동상/3등)</option>
+        <option value="badge-rank">민트 (순위/TOP)</option>
+        <option value="badge-award">라벤더 (장려상 등)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="recordCancel">취소</button>
+      <button class="modal-btn primary" id="recordSubmit">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 학교 추가/수정 모달 -->
+<div class="modal-overlay" id="schoolModal">
+  <div class="modal-box">
+    <h3 id="schoolModalTitle">학교 추가</h3>
+    <div class="modal-field">
+      <label>기간</label>
+      <input type="text" id="schPeriod" placeholder="예: 2025 ~">
+    </div>
+    <div class="modal-field">
+      <label>학교명</label>
+      <input type="text" id="schName" placeholder="예: 한국디지털미디어고등학교">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="schoolCancel">취소</button>
+      <button class="modal-btn primary" id="schoolSubmit">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상단 태그 추가/수정 모달 -->
+<div class="modal-overlay" id="tagModal">
+  <div class="modal-box">
+    <h3 id="tagModalTitle">태그 추가</h3>
+    <div class="modal-field">
+      <label>이모지 (선택)</label>
+      <input type="text" id="tagEmoji" placeholder="예: 📅">
+    </div>
+    <div class="modal-field">
+      <label>텍스트</label>
+      <input type="text" id="tagText" placeholder="예: 2009년 5월생">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" id="tagCancel">취소</button>
+      <button class="modal-btn primary" id="tagSubmit">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+const EDIT_PASSWORD = "0508";
+let isEditMode = false;
+
+const DEFAULT_SCHOOLS = [
+  { id: "s1", period: "2025 ~", name: "한국디지털미디어고등학교" },
+  { id: "s2", period: "2022 ~ 2024", name: "배곧중학교" }
+];
+
+const DEFAULT_RECORDS = [
+  { id: "r1", year: "2022", desc: "i-Top 경진대회 SW코딩부문 — 경기서부지역센터장상", badgeText: "센터장상", badgeColor: "badge-gold" },
+  { id: "r2", year: "2023", desc: "KOI 중등부 1차 — 장려상", badgeText: "장려상", badgeColor: "badge-award" },
+  { id: "r3", year: "2024", desc: "KOI 중등부 1차 — 장려상", badgeText: "장려상", badgeColor: "badge-award" },
+  { id: "r4", year: "2024", desc: "NYPC (Nexon Youth Programming Challenge) — TOP 500", badgeText: "TOP 500", badgeColor: "badge-rank" },
+  { id: "r5", year: "2025", desc: "DIMICTF — 2등", badgeText: "2등", badgeColor: "badge-silver" },
+  { id: "r6", year: "2025", desc: "KOI 고등부 1차 — 동상", badgeText: "동상", badgeColor: "badge-bronze" },
+  { id: "r7", year: "2025", desc: "KOI 고등부 2차 — 장려상", badgeText: "장려상", badgeColor: "badge-award" },
+  { id: "r8", year: "2025", desc: "NYPC (Nexon Youth Programming Challenge) — TOP 500", badgeText: "TOP 500", badgeColor: "badge-rank" },
+  { id: "r9", year: "2025", desc: "디미고 프로그래밍 챌린지 3회 — 3등", badgeText: "3등", badgeColor: "badge-bronze" },
+  { id: "r10", year: "2026", desc: "KAIST RUN Spring Contest — TOP 67", badgeText: "TOP 67", badgeColor: "badge-rank" },
+  { id: "r11", year: "2026", desc: "SCSC Div3 — TOP 20", badgeText: "TOP 20", badgeColor: "badge-rank" },
+  { id: "r12", year: "2026", desc: "KOI 고등부 1차 — 동상", badgeText: "동상", badgeColor: "badge-bronze" }
+];
+
+const DEFAULT_TAGS = [
+  { id: "tg1", emoji: "📅", text: "2009년 5월생" }
+];
+
+let schools = [];
+let records = [];
+let tags = [];
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function waitForFirestore() {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (window.__firestore) resolve(window.__firestore);
+      else setTimeout(check, 50);
+    };
+    check();
+  });
+}
+
+async function loadData() {
+  const { db, doc, getDoc } = await waitForFirestore();
+  try {
+    const snap = await getDoc(doc(db, 'portfolio', 'records'));
+    records = snap.exists() ? snap.data().list : DEFAULT_RECORDS;
+  } catch (e) {
+    console.error('records load error', e);
+    records = DEFAULT_RECORDS;
+  }
+  try {
+    const snap = await getDoc(doc(db, 'portfolio', 'schools'));
+    schools = snap.exists() ? snap.data().list : DEFAULT_SCHOOLS;
+  } catch (e) {
+    console.error('schools load error', e);
+    schools = DEFAULT_SCHOOLS;
+  }
+  try {
+    const snap = await getDoc(doc(db, 'portfolio', 'tags'));
+    tags = snap.exists() ? snap.data().list : DEFAULT_TAGS;
+  } catch (e) {
+    console.error('tags load error', e);
+    tags = DEFAULT_TAGS;
+  }
+  render();
+}
+
+async function saveRecords() {
+  const { db, doc, setDoc } = await waitForFirestore();
+  try {
+    await setDoc(doc(db, 'portfolio', 'records'), { list: records });
+  } catch (e) {
+    console.error('records save error', e);
+    showToast('저장 실패, 다시 시도해주세요');
+  }
+}
+
+async function saveSchools() {
+  const { db, doc, setDoc } = await waitForFirestore();
+  try {
+    await setDoc(doc(db, 'portfolio', 'schools'), { list: schools });
+  } catch (e) {
+    console.error('schools save error', e);
+    showToast('저장 실패, 다시 시도해주세요');
+  }
+}
+
+async function saveTags() {
+  const { db, doc, setDoc } = await waitForFirestore();
+  try {
+    await setDoc(doc(db, 'portfolio', 'tags'), { list: tags });
+  } catch (e) {
+    console.error('tags save error', e);
+    showToast('저장 실패, 다시 시도해주세요');
+  }
+}
+
+function render() {
+  // hero tags
+  const heroMeta = document.getElementById('heroMetaContainer');
+  heroMeta.innerHTML = '';
+  tags.forEach(t => {
+    const span = document.createElement('span');
+    span.innerHTML = `${t.emoji ? escapeHtml(t.emoji) + ' ' : ''}${escapeHtml(t.text)}${isEditMode ? `<button class="tag-del" data-del-tag="${t.id}">✕</button>` : ''}`;
+    heroMeta.appendChild(span);
+  });
+
+  // schools
+  const schoolCard = document.getElementById('schoolCard');
+  schoolCard.innerHTML = '';
+  schools.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'profile-item';
+    item.innerHTML = `
+      <div class="profile-label mono">${escapeHtml(s.period)}</div>
+      <div class="profile-value">${escapeHtml(s.name)}</div>
+      ${isEditMode ? `
+        <div class="t-item-actions" style="position:absolute; top:0; right:0;">
+          <button class="icon-btn" data-edit-school="${s.id}">✎</button>
+          <button class="icon-btn danger" data-del-school="${s.id}">✕</button>
+        </div>
+      ` : ''}
+    `;
+    schoolCard.appendChild(item);
+  });
+
+  // records grouped by year
+  const grouped = {};
+  records.forEach(r => {
+    if (!grouped[r.year]) grouped[r.year] = [];
+    grouped[r.year].push(r);
+  });
+  const years = Object.keys(grouped).sort((a, b) => a - b);
+
+  const container = document.getElementById('timelineContainer');
+  container.innerHTML = '';
+  years.forEach(year => {
+    const group = document.createElement('div');
+    group.className = 't-year-group';
+    const itemsHtml = grouped[year].map(r => `
+      <div class="t-item">
+        <span class="t-badge ${r.badgeColor}">${escapeHtml(r.badgeText)}</span>
+        <span class="t-desc">${escapeHtml(r.desc)}</span>
+        ${isEditMode ? `
+          <div class="t-item-actions">
+            <button class="icon-btn" data-edit-record="${r.id}">✎</button>
+            <button class="icon-btn danger" data-del-record="${r.id}">✕</button>
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+    group.innerHTML = `<div class="t-year">${escapeHtml(year)}</div>${itemsHtml}`;
+    container.appendChild(group);
+  });
+
+  attachItemListeners();
+  document.getElementById('addSchoolBtn').style.display = isEditMode ? 'block' : 'none';
+  document.getElementById('addRecordBtn').style.display = isEditMode ? 'block' : 'none';
+  document.getElementById('addTagBtn').style.display = isEditMode ? 'inline-block' : 'none';
+  document.getElementById('editPill').style.display = isEditMode ? 'inline-block' : 'none';
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function attachItemListeners() {
+  document.querySelectorAll('[data-edit-record]').forEach(btn => {
+    btn.onclick = () => openRecordModal(btn.dataset.editRecord);
+  });
+  document.querySelectorAll('[data-del-record]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('이 성적을 삭제할까요?')) return;
+      records = records.filter(r => r.id !== btn.dataset.delRecord);
+      await saveRecords();
+      render();
+      showToast('삭제됐어요');
+    };
+  });
+  document.querySelectorAll('[data-edit-school]').forEach(btn => {
+    btn.onclick = () => openSchoolModal(btn.dataset.editSchool);
+  });
+  document.querySelectorAll('[data-del-school]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('이 학교를 삭제할까요?')) return;
+      schools = schools.filter(s => s.id !== btn.dataset.delSchool);
+      await saveSchools();
+      render();
+      showToast('삭제됐어요');
+    };
+  });
+  document.querySelectorAll('[data-del-tag]').forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm('이 태그를 삭제할까요?')) return;
+      tags = tags.filter(t => t.id !== btn.dataset.delTag);
+      await saveTags();
+      render();
+      showToast('삭제됐어요');
+    };
+  });
+}
+
+// ---------- record modal ----------
+let editingRecordId = null;
+function openRecordModal(id) {
+  editingRecordId = id || null;
+  const modal = document.getElementById('recordModal');
+  if (id) {
+    const r = records.find(x => x.id === id);
+    document.getElementById('recordModalTitle').textContent = '성적 수정';
+    document.getElementById('recYear').value = r.year;
+    document.getElementById('recDesc').value = r.desc;
+    document.getElementById('recBadgeText').value = r.badgeText;
+    document.getElementById('recBadgeColor').value = r.badgeColor;
+  } else {
+    document.getElementById('recordModalTitle').textContent = '성적 추가';
+    document.getElementById('recYear').value = '';
+    document.getElementById('recDesc').value = '';
+    document.getElementById('recBadgeText').value = '';
+    document.getElementById('recBadgeColor').value = 'badge-rank';
+  }
+  modal.classList.add('show');
+}
+
+document.getElementById('addRecordBtn').onclick = () => openRecordModal(null);
+document.getElementById('recordCancel').onclick = () => document.getElementById('recordModal').classList.remove('show');
+
+document.getElementById('recordSubmit').onclick = async () => {
+  const year = document.getElementById('recYear').value.trim();
+  const desc = document.getElementById('recDesc').value.trim();
+  const badgeText = document.getElementById('recBadgeText').value.trim();
+  const badgeColor = document.getElementById('recBadgeColor').value;
+  if (!year || !desc || !badgeText) {
+    showToast('모든 항목을 입력해주세요');
+    return;
+  }
+  if (editingRecordId) {
+    const r = records.find(x => x.id === editingRecordId);
+    r.year = year; r.desc = desc; r.badgeText = badgeText; r.badgeColor = badgeColor;
+  } else {
+    records.push({ id: 'r' + Date.now(), year, desc, badgeText, badgeColor });
+  }
+  await saveRecords();
+  document.getElementById('recordModal').classList.remove('show');
+  render();
+  showToast('저장됐어요');
+};
+
+// ---------- school modal ----------
+let editingSchoolId = null;
+function openSchoolModal(id) {
+  editingSchoolId = id || null;
+  const modal = document.getElementById('schoolModal');
+  if (id) {
+    const s = schools.find(x => x.id === id);
+    document.getElementById('schoolModalTitle').textContent = '학교 수정';
+    document.getElementById('schPeriod').value = s.period;
+    document.getElementById('schName').value = s.name;
+  } else {
+    document.getElementById('schoolModalTitle').textContent = '학교 추가';
+    document.getElementById('schPeriod').value = '';
+    document.getElementById('schName').value = '';
+  }
+  modal.classList.add('show');
+}
+
+document.getElementById('addSchoolBtn').onclick = () => openSchoolModal(null);
+document.getElementById('schoolCancel').onclick = () => document.getElementById('schoolModal').classList.remove('show');
+
+document.getElementById('schoolSubmit').onclick = async () => {
+  const period = document.getElementById('schPeriod').value.trim();
+  const name = document.getElementById('schName').value.trim();
+  if (!period || !name) {
+    showToast('모든 항목을 입력해주세요');
+    return;
+  }
+  if (editingSchoolId) {
+    const s = schools.find(x => x.id === editingSchoolId);
+    s.period = period; s.name = name;
+  } else {
+    schools.push({ id: 's' + Date.now(), period, name });
+  }
+  await saveSchools();
+  document.getElementById('schoolModal').classList.remove('show');
+  render();
+  showToast('저장됐어요');
+};
+
+// ---------- tag modal ----------
+function openTagModal() {
+  document.getElementById('tagModalTitle').textContent = '태그 추가';
+  document.getElementById('tagEmoji').value = '';
+  document.getElementById('tagText').value = '';
+  document.getElementById('tagModal').classList.add('show');
+}
+
+document.getElementById('addTagBtn').onclick = openTagModal;
+document.getElementById('tagCancel').onclick = () => document.getElementById('tagModal').classList.remove('show');
+
+document.getElementById('tagSubmit').onclick = async () => {
+  const emoji = document.getElementById('tagEmoji').value.trim();
+  const text = document.getElementById('tagText').value.trim();
+  if (!text) {
+    showToast('텍스트를 입력해주세요');
+    return;
+  }
+  tags.push({ id: 'tg' + Date.now(), emoji, text });
+  await saveTags();
+  document.getElementById('tagModal').classList.remove('show');
+  render();
+  showToast('저장됐어요');
+};
+
+// ---------- password unlock ----------
+function checkEditKey() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('key') === 'admin') {
+    document.getElementById('pwModal').classList.add('show');
+  }
+}
+
+document.getElementById('pwCancel').onclick = () => document.getElementById('pwModal').classList.remove('show');
+document.getElementById('pwSubmit').onclick = () => {
+  const val = document.getElementById('pwInput').value;
+  if (val === EDIT_PASSWORD) {
+    isEditMode = true;
+    document.getElementById('pwModal').classList.remove('show');
+    render();
+    showToast('편집 모드 켜짐');
+  } else {
+    showToast('비밀번호가 틀렸어요');
+  }
+  document.getElementById('pwInput').value = '';
+};
+document.getElementById('pwInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('pwSubmit').click();
+});
+
+loadData();
+checkEditKey();
+</script>
+
+</body>
+</html>
